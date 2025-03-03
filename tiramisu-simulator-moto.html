@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ティラミス（ドラゴンルーラー）ダメージシミュレータ</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #5a3a7e;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #5a3a7e;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #4a2a6e;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #5a3a7e;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .dragon-icon {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            background-color: #ff9900;
+            border-radius: 50%;
+            margin-right: 2px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            table {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ティラミス（ドラゴンルーラー）<br>ダメージシミュレータ</h1>
+        
+        <div class="input-group">
+            <label for="spirit">精神値:</label>
+            <input type="number" id="spirit" min="0" value="200">
+        </div>
+        
+        <div class="input-group">
+            <label for="skill">使用スキル:</label>
+            <select id="skill">
+                <option value="dragontail">ドラゴンテイル</option>
+                <option value="dragonwing">ドラゴンウィング</option>
+                <option value="dragonbreath">ドラゴンブレス</option>
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <label for="skillLevel">スキルレベル:</label>
+            <select id="skillLevel">
+                <option value="1">Lv 1</option>
+                <option value="2">Lv 2</option>
+                <option value="3">Lv 3</option>
+                <option value="4">Lv 4</option>
+                <option value="5">Lv 5</option>
+                <option value="6">Lv 6</option>
+                <option value="7">Lv 7</option>
+                <option value="8">Lv 8</option>
+                <option value="9">Lv 9</option>
+                <option value="10" selected>Lv 10</option>
+            </select>
+        </div>
+        
+        <button onclick="calculateDamage()">ダメージ計算</button>
+        
+        <div class="results" id="results">
+            <h3>計算結果</h3>
+            <p>精神値: <span id="result-spirit">200</span></p>
+            <p>スキル: <span id="result-skill">ドラゴンテイル</span> Lv.<span id="result-level">10</span></p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>竜素蓄積数</th>
+                        <th>固定ダメージ</th>
+                    </tr>
+                </thead>
+                <tbody id="damage-table">
+                    <!-- JavaScript で動的に生成される -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 初期表示
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateDamage();
+        });
+        
+        function calculateDamage() {
+            const spirit = parseInt(document.getElementById('spirit').value);
+            const skill = document.getElementById('skill').value;
+            const skillLevel = parseInt(document.getElementById('skillLevel').value);
+            
+            // 結果表示の更新
+            document.getElementById('result-spirit').textContent = spirit;
+            
+            let skillName = "";
+            switch(skill) {
+                case "dragontail":
+                    skillName = "ドラゴンテイル";
+                    break;
+                case "dragonwing":
+                    skillName = "ドラゴンウィング";
+                    break;
+                case "dragonbreath":
+                    skillName = "ドラゴンブレス";
+                    break;
+            }
+            document.getElementById('result-skill').textContent = skillName;
+            document.getElementById('result-level').textContent = skillLevel;
+            
+            // スキル倍率（本来はゲームデータに基づいて設定）
+            let baseMultiplier = 0;
+            switch(skill) {
+                case "dragontail":
+                    baseMultiplier = 2.0 + (skillLevel - 1) * 0.1; // 例: Lv1で2.0、Lv10で2.9
+                    break;
+                case "dragonwing":
+                    baseMultiplier = 2.5 + (skillLevel - 1) * 0.15; // 例: Lv1で2.5、Lv10で3.85
+                    break;
+                case "dragonbreath":
+                    baseMultiplier = 3.0 + (skillLevel - 1) * 0.2; // 例: Lv1で3.0、Lv10で4.8
+                    break;
+            }
+            
+            // テーブル内容の更新
+            const tableBody = document.getElementById('damage-table');
+            tableBody.innerHTML = '';
+            
+            // 竜素蓄積数ごとの計算（0から7まで）
+            for (let dragons = 0; dragons <= 7; dragons++) {
+                // 竜素ボーナス（蓄積数に応じて増加）
+                const dragonBonus = 1.0 + (dragons * 0.2); // 例: 1竜素で1.2倍、7竜素で2.4倍
+                
+                // 固定ダメージ計算（このダメージ式は仮想です。実際のゲームデータに基づいて調整してください）
+                const fixedDamage = Math.floor(spirit * baseMultiplier * dragonBonus);
+                
+                // 行の作成
+                const row = document.createElement('tr');
+                
+                // 竜素蓄積数のセル
+                const dragonCell = document.createElement('td');
+                for (let i = 0; i < dragons; i++) {
+                    const icon = document.createElement('span');
+                    icon.className = 'dragon-icon';
+                    dragonCell.appendChild(icon);
+                }
+                if (dragons === 0) {
+                    dragonCell.textContent = 'なし';
+                }
+                row.appendChild(dragonCell);
+                
+                // ダメージのセル
+                const damageCell = document.createElement('td');
+                damageCell.textContent = fixedDamage.toLocaleString();
+                row.appendChild(damageCell);
+                
+                tableBody.appendChild(row);
+            }
+        }
+    </script>
+</body>
+</html>

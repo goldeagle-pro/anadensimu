@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ティラミス（ドラゴンルーラー）ダメージシミュレータ</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #5a3a7e;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #5a3a7e;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #4a2a6e;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #5a3a7e;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .dragon-icon {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            background-color: #ff9900;
+            border-radius: 50%;
+            margin-right: 2px;
+        }
+        .info-text {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            table {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ティラミス（ドラゴンルーラー）<br>ダメージシミュレータ</h1>
+        
+        <div class="input-group">
+            <label for="spirit">精神値:</label>
+            <input type="number" id="spirit" min="1" value="200">
+            <div id="max-spirit-info" class="info-text">精神上限値: 400</div>
+        </div>
+        
+        <div class="input-group">
+            <label for="skill">使用スキル:</label>
+            <select id="skill" onchange="updateUI()">
+                <option value="ritual">召竜の儀式</option>
+                <option value="offering">召竜の奉儀</option>
+                <option value="prayer">召竜の祷儀</option>
+                <option value="doublepiercer">双竜絶衝穿</option>
+                <option value="truedoublepiercer">真破・双竜絶衝穿</option>
+                <option value="ultimatedoublepiercer">極破・双竜絶衝穿</option>
+                <option value="heavendoublepiercer">天破・双竜絶衝穿</option>
+            </select>
+        </div>
+        
+        <div class="input-group" id="dragon-stack-container">
+            <label for="dragonStack">竜素蓄積数:</label>
+            <select id="dragonStack">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+            </select>
+        </div>
+        
+        <button onclick="calculateDamage()">ダメージ計算</button>
+        
+        <div class="results" id="results">
+            <h3>計算結果</h3>
+            <p>精神値: <span id="result-spirit">200</span></p>
+            <p>スキル: <span id="result-skill">召竜の儀式</span></p>
+            <p id="result-dragons-container">竜素蓄積数: <span id="result-dragons">0</span></p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>固定ダメージ</th>
+                    </tr>
+                </thead>
+                <tbody id="damage-table">
+                    <!-- JavaScript で動的に生成される -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // スキルデータ
+        const skillData = {
+            ritual: {
+                name: "召竜の儀式",
+                maxSpirit: 70,
+                minDamage: 500,
+                maxDamage: 10000,
+                fixedDragonStack: 0
+            },
+            offering: {
+                name: "召竜の奉儀",
+                maxSpirit: 140,
+                minDamage: 5000,
+                maxDamage: 45000,
+                fixedDragonStack: 0
+            },
+            prayer: {
+                name: "召竜の祷儀",
+                maxSpirit: 400,
+                minDamage: 15000,
+                maxDamage: 1800000,
+                fixedDragonStack: 0
+            },
+            doublepiercer: {
+                name: "双竜絶衝穿",
+                maxSpirit: 400,
+                minDamage: 15000,
+                maxDamage: 1800000
+            },
+            truedoublepiercer: {
+                name: "真破・双竜絶衝穿",
+                maxSpirit: 400,
+                minDamage: 30000,
+                maxDamage: 2400000
+            },
+            ultimatedoublepiercer: {
+                name: "極破・双竜絶衝穿",
+                maxSpirit: 400,
+                minDamage: 45000,
+                maxDamage: 3000000
+            },
+            heavendoublepiercer: {
+                name: "天破・双竜絶衝穿",
+                maxSpirit: 400,
+                minDamage: 60000,
+                maxDamage: 4800000
+            }
+        };
+        
+        // 初期表示
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUI();
+            calculateDamage();
+        });
+        
+        function updateUI() {
+            const skill = document.getElementById('skill').value;
+            const skillInfo = skillData[skill];
+            
+            // 精神上限値の表示を更新
+            document.getElementById('max-spirit-info').textContent = `精神上限値: ${skillInfo.maxSpirit}`;
+            
+            // 竜素蓄積数の選択肢を表示/非表示
+            const dragonStackContainer = document.getElementById('dragon-stack-container');
+            const resultDragonsContainer = document.getElementById('result-dragons-container');
+            
+            if ('fixedDragonStack' in skillInfo) {
+                dragonStackContainer.style.display = 'none';
+                resultDragonsContainer.style.display = 'none';
+            } else {
+                dragonStackContainer.style.display = 'block';
+                resultDragonsContainer.style.display = 'block';
+            }
+        }
+        
+        function calculateDamage() {
+            const spirit = parseInt(document.getElementById('spirit').value);
+            const skill = document.getElementById('skill').value;
+            const skillInfo = skillData[skill];
+            
+            // 竜素蓄積数（固定値のスキルの場合は固定値を使用）
+            let dragonStack = 0;
+            if ('fixedDragonStack' in skillInfo) {
+                dragonStack = skillInfo.fixedDragonStack;
+            } else {
+                dragonStack = parseInt(document.getElementById('dragonStack').value);
+            }
+            
+            // 結果表示の更新
+            document.getElementById('result-spirit').textContent = spirit;
+            document.getElementById('result-skill').textContent = skillInfo.name;
+            document.getElementById('result-dragons').textContent = dragonStack;
+            
+            // 固定ダメージ計算
+            const maxSpirit = skillInfo.maxSpirit;
+            const minDamage = skillInfo.minDamage;
+            const maxDamage = skillInfo.maxDamage;
+            
+            // ダメージ=最小ダメージ+(最大ダメージ*(竜素蓄積数+1)-最小ダメージ)*((精神-1)/(精神上限値-1))^5
+            const spiritRatio = Math.pow((Math.min(spirit, maxSpirit) - 1) / (maxSpirit - 1), 5);
+            const dragonMultiplier = dragonStack + 1;
+            const damage = Math.floor(minDamage + (maxDamage * dragonMultiplier - minDamage) * spiritRatio);
+            
+            // テーブル内容の更新
+            const tableBody = document.getElementById('damage-table');
+            tableBody.innerHTML = '';
+            
+            // ダメージの行を追加
+            const row = document.createElement('tr');
+            const damageCell = document.createElement('td');
+            damageCell.textContent = damage.toLocaleString();
+            row.appendChild(damageCell);
+            tableBody.appendChild(row);
+        }
+    </script>
+</body>
+</html>
